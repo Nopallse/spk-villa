@@ -4,6 +4,33 @@
 @section('page-description', 'Kelola kriteria penilaian villa untuk sistem rekomendasi')
 
 @section('content')
+<!-- Alert Messages -->
+@if(session('success'))
+<div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <i class="fas fa-check-circle text-green-400"></i>
+        </div>
+        <div class="ml-3">
+            <p class="text-sm text-green-700">{{ session('success') }}</p>
+        </div>
+    </div>
+</div>
+@endif
+
+@if(session('error'))
+<div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <i class="fas fa-exclamation-circle text-red-400"></i>
+        </div>
+        <div class="ml-3">
+            <p class="text-sm text-red-700">{{ session('error') }}</p>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Stats Cards -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-primary-600">
@@ -153,6 +180,9 @@
         <table class="min-w-full divide-y divide-gray-200" id="criteriaTable">
             <thead class="bg-gray-50">
                 <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                        Urutan
+                    </th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Kriteria
                     </th>
@@ -170,9 +200,19 @@
                     </th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody id="criteriaTableBody" class="bg-white divide-y divide-gray-200">
                 @forelse($criteria as $criterion)
-                <tr class="hover:bg-gray-50 criteria-row">
+                <tr class="hover:bg-gray-50 criteria-row" data-id="{{ $criterion->id }}" data-order="{{ $criterion->order }}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center justify-center">
+                            <div class="bg-primary-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-semibold">
+                                {{ $criterion->order }}
+                            </div>
+                            <div class="drag-handle cursor-grab active:cursor-grabbing ml-3 p-2 hover:bg-gray-100 rounded" title="Drag untuk mengurutkan">
+                                <i class="fas fa-grip-vertical text-gray-500 text-lg"></i>
+                            </div>
+                        </div>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="bg-primary-100 w-10 h-10 rounded-full flex items-center justify-center">
@@ -244,7 +284,7 @@
                 </tr>
                 @empty
                 <tr id="emptyState">
-                    <td colspan="5" class="px-6 py-12 text-center">
+                    <td colspan="6" class="px-6 py-12 text-center">
                         <div class="flex flex-col items-center">
                             <i class="fas fa-list text-4xl text-gray-300 mb-4"></i>
                             <h3 class="text-lg font-medium text-gray-900 mb-2">Belum ada kriteria</h3>
@@ -364,6 +404,7 @@
 
 <script>
 let editingId = null;
+let sortableInstance = null;
 
 // Search functionality
 document.getElementById('searchInput').addEventListener('input', function() {
@@ -390,14 +431,42 @@ document.getElementById('searchInput').addEventListener('input', function() {
     }
 });
 
+// Initialize SortableJS when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    const tbody = document.getElementById('criteriaTableBody');
+    if (tbody) {
+        sortableInstance = new Sortable(tbody, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-drag',
+            dragClass: 'sortable-drag',
+            forceFallback: false,
+            fallbackOnBody: true,
+            swapThreshold: 0.65,
+            onEnd: function(evt) {
+                updateOrder();
+            }
+        });
+    }
+});
+
 // Modal functions
 function openCreateModal() {
+    editingId = null;
     document.getElementById('modalTitle').textContent = 'Tambah Kriteria';
     document.getElementById('criterionForm').action = '{{ route("admin.criteria.store") }}';
     document.getElementById('methodField').innerHTML = '';
+    
+    // Reset form fields
     document.getElementById('criterionForm').reset();
+    document.getElementById('name').value = '';
+    document.getElementById('code').value = '';
+    document.getElementById('type').value = '';
+    document.getElementById('description').value = '';
+    document.getElementById('order').value = '1';
     document.getElementById('is_active').checked = true;
-    editingId = null;
+    
     document.getElementById('criterionModal').classList.remove('hidden');
 }
 
@@ -407,9 +476,59 @@ function editCriterion(id) {
     document.getElementById('criterionForm').action = `/admin/criteria/${id}`;
     document.getElementById('methodField').innerHTML = '@method("PUT")';
     
-    // In real implementation, fetch criterion data via AJAX
-    // For now, we'll just show the modal
-    document.getElementById('criterionModal').classList.remove('hidden');
+    // Show loading state
+    const submitBtn = document.querySelector('#criterionForm button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memuat...';
+    
+    // Fetch criterion data via AJAX
+    fetch(`/admin/criteria/${id}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success && data.data) {
+            const criterion = data.data;
+            
+            // Populate form fields
+            document.getElementById('name').value = criterion.name || '';
+            document.getElementById('code').value = criterion.code || '';
+            document.getElementById('type').value = criterion.type || 'benefit';
+            document.getElementById('description').value = criterion.description || '';
+            document.getElementById('order').value = criterion.order || 1;
+            
+            // Handle is_active checkbox
+            const isActiveCheckbox = document.getElementById('is_active');
+            if (isActiveCheckbox) {
+                isActiveCheckbox.checked = criterion.is_active == 1 || criterion.is_active === true || criterion.is_active === '1';
+            }
+            
+            // Show modal
+            document.getElementById('criterionModal').classList.remove('hidden');
+        } else {
+            showToast('Gagal memuat data kriteria', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Terjadi kesalahan saat memuat data kriteria', 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    });
 }
 
 function toggleStatus(id) {
@@ -434,6 +553,15 @@ function toggleStatus(id) {
 function closeModal() {
     document.getElementById('criterionModal').classList.add('hidden');
     editingId = null;
+    
+    // Reset form when closing
+    document.getElementById('criterionForm').reset();
+    document.getElementById('name').value = '';
+    document.getElementById('code').value = '';
+    document.getElementById('type').value = '';
+    document.getElementById('description').value = '';
+    document.getElementById('order').value = '1';
+    document.getElementById('is_active').checked = true;
 }
 
 // Close modal on outside click
@@ -442,8 +570,131 @@ document.getElementById('criterionModal').addEventListener('click', function(e) 
         closeModal();
     }
 });
+
+// Update order after drag
+function updateOrder() {
+    const rows = document.querySelectorAll('#criteriaTableBody tr[data-id]');
+    const items = [];
+    
+    rows.forEach((row, index) => {
+        items.push({
+            id: parseInt(row.getAttribute('data-id')),
+            order: index + 1
+        });
+    });
+    
+    // Show loading indicator
+    const loadingToast = showToast('Memperbarui urutan...', 'info');
+    
+    fetch('{{ route("admin.criteria.update-order") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ items: items })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideToast(loadingToast);
+        if (data.success) {
+            // Update order numbers in UI
+            rows.forEach((row, index) => {
+                const orderBadge = row.querySelector('.bg-primary-600');
+                if (orderBadge) {
+                    orderBadge.textContent = index + 1;
+                    row.setAttribute('data-order', index + 1);
+                }
+            });
+            showToast(data.message || 'Urutan berhasil diperbarui', 'success');
+        } else {
+            showToast(data.message || 'Gagal memperbarui urutan', 'error');
+            location.reload(); // Reload to sync with server
+        }
+    })
+    .catch(error => {
+        hideToast(loadingToast);
+        console.error('Error:', error);
+        showToast('Terjadi kesalahan saat memperbarui urutan', 'error');
+        location.reload(); // Reload to sync with server
+    });
+}
+
+// Toast notification functions
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+    toast.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('translate-x-0'), 10);
+    return toast;
+}
+
+function hideToast(toast) {
+    if (toast) {
+        toast.classList.add('-translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+    }
+}
 </script>
 
 <!-- Include Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<!-- Include SortableJS for drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<style>
+/* Prevent text selection during drag */
+.sortable-ghost {
+    opacity: 0.5;
+    background-color: #e0f2fe !important;
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    background-color: #dbeafe !important;
+}
+
+.drag-handle {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.criteria-row {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.drag-handle:active {
+    cursor: grabbing !important;
+}
+
+.drag-handle:hover {
+    background-color: #f3f4f6;
+}
+
+/* Allow selection in buttons and inputs */
+button, input, textarea, select {
+    user-select: auto;
+    -webkit-user-select: auto;
+}
+</style>
+
+<!-- Include Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<!-- Include SortableJS for drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 @endsection

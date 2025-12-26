@@ -19,19 +19,19 @@
                     </x-nav-link>
                     
                     @if(auth()->user()->role !== 'admin')
-                        <x-nav-link href="/preferences" :active="request()->is('preferences')" class="flex items-center">
-                            <i class="fas fa-sliders-h mr-2"></i>
+                        <x-nav-link :href="route('user.villas.index')" :active="request()->routeIs('user.villas.*')" class="flex items-center">
+                            <i class="fas fa-search mr-2"></i>
                             Cari Villa
                         </x-nav-link>
                         
-                        <x-nav-link href="/results" :active="request()->is('results')" class="flex items-center">
-                            <i class="fas fa-list mr-2"></i>
+                        <x-nav-link :href="route('user.recommendations.index')" :active="request()->routeIs('user.recommendations.*') || request()->routeIs('results')" class="flex items-center">
+                            <i class="fas fa-star mr-2"></i>
                             Rekomendasi
                         </x-nav-link>
                         
-                        <x-nav-link href="/history" :active="request()->is('history')" class="flex items-center">
-                            <i class="fas fa-history mr-2"></i>
-                            Riwayat
+                        <x-nav-link :href="route('user.compare.index')" :active="request()->routeIs('user.compare.*')" class="flex items-center">
+                            <i class="fas fa-balance-scale mr-2"></i>
+                            Bandingkan
                         </x-nav-link>
                     @else
                         <x-nav-link href="/admin/villas" :active="request()->is('admin/villas*')" class="flex items-center">
@@ -54,14 +54,7 @@
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
-                @if(auth()->user()->role !== 'admin')
-                    <!-- Quick Actions for Users -->
-                    <div class="flex items-center space-x-3 mr-4">
-                        <a href="/preferences" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition text-sm">
-                            <i class="fas fa-search mr-2"></i>Cari Villa
-                        </a>
-                    </div>
-                @endif
+              
                 
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
@@ -100,12 +93,12 @@
                         </x-dropdown-link>
                         
                         @if(auth()->user()->role !== 'admin')
-                            <x-dropdown-link href="/favorites" class="flex items-center">
+                            <x-dropdown-link :href="route('user.favorites.index')" class="flex items-center">
                                 <i class="fas fa-heart mr-2 text-red-400"></i>
                                 Favorit Saya
                             </x-dropdown-link>
                             
-                            <x-dropdown-link href="/history" class="flex items-center">
+                            <x-dropdown-link :href="route('user.history.index')" class="flex items-center">
                                 <i class="fas fa-history mr-2 text-blue-400"></i>
                                 Riwayat Pencarian
                             </x-dropdown-link>
@@ -152,17 +145,32 @@
             </x-responsive-nav-link>
             
             @if(auth()->user()->role !== 'admin')
-                <x-responsive-nav-link href="/preferences" :active="request()->is('preferences')" class="flex items-center">
-                    <i class="fas fa-sliders-h mr-2"></i>
+                <x-responsive-nav-link :href="route('user.villas.index')" :active="request()->routeIs('user.villas.*')" class="flex items-center">
+                    <i class="fas fa-search mr-2"></i>
                     Cari Villa
                 </x-responsive-nav-link>
                 
-                <x-responsive-nav-link href="/results" :active="request()->is('results')" class="flex items-center">
-                    <i class="fas fa-list mr-2"></i>
+                <x-responsive-nav-link :href="route('user.recommendations.index')" :active="request()->routeIs('user.recommendations.*') || request()->routeIs('results')" class="flex items-center">
+                    <i class="fas fa-star mr-2"></i>
                     Rekomendasi
                 </x-responsive-nav-link>
                 
-                <x-responsive-nav-link href="/history" :active="request()->is('history')" class="flex items-center">
+                <x-responsive-nav-link :href="route('user.compare.index')" :active="request()->routeIs('user.compare.*')" class="flex items-center">
+                    <i class="fas fa-balance-scale mr-2"></i>
+                    Bandingkan
+                </x-responsive-nav-link>
+                
+                <x-responsive-nav-link :href="route('user.favorites.index')" :active="request()->routeIs('user.favorites.*')" class="flex items-center">
+                    <i class="fas fa-heart mr-2"></i>
+                    Favorit
+                </x-responsive-nav-link>
+                
+                <x-responsive-nav-link :href="route('user.about.index')" :active="request()->routeIs('user.about.*')" class="flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Tentang Sistem
+                </x-responsive-nav-link>
+                
+                <x-responsive-nav-link :href="route('user.history.index')" :active="request()->routeIs('user.history.*')" class="flex items-center">
                     <i class="fas fa-history mr-2"></i>
                     Riwayat
                 </x-responsive-nav-link>
@@ -201,7 +209,7 @@
                 </x-responsive-nav-link>
                 
                 @if(auth()->user()->role !== 'admin')
-                    <x-responsive-nav-link href="/favorites" class="flex items-center">
+                    <x-responsive-nav-link :href="route('user.favorites.index')" class="flex items-center">
                         <i class="fas fa-heart mr-2"></i>
                         Favorit Saya
                     </x-responsive-nav-link>

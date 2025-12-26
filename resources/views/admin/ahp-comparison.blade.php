@@ -209,28 +209,76 @@
                                         <option value="3" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 3) ? 'selected' : '' }}>3</option>
                                         <option value="2" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 2) ? 'selected' : '' }}>2</option>
                                         <option value="1" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 1) ? 'selected' : '' }}>1</option>
-                                        <option value="0.5" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 0.5) ? 'selected' : '' }}>1/2</option>
-                                        <option value="0.33" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 0.33) ? 'selected' : '' }}>1/3</option>
-                                        <option value="0.25" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 0.25) ? 'selected' : '' }}>1/4</option>
-                                        <option value="0.2" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 0.2) ? 'selected' : '' }}>1/5</option>
-                                        <option value="0.17" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 0.17) ? 'selected' : '' }}>1/6</option>
-                                        <option value="0.14" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 0.14) ? 'selected' : '' }}>1/7</option>
-                                        <option value="0.125" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 0.125) ? 'selected' : '' }}>1/8</option>
-                                        <option value="0.11" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && $comparisons[$criterionA->id][$criterionB->id] == 0.11) ? 'selected' : '' }}>1/9</option>
+                                        <option value="0.5" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && abs($comparisons[$criterionA->id][$criterionB->id] - 0.5) < 0.01) ? 'selected' : '' }}>1/2</option>
+                                        <option value="0.333333" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && (abs($comparisons[$criterionA->id][$criterionB->id] - 0.33) < 0.01 || abs($comparisons[$criterionA->id][$criterionB->id] - 0.333) < 0.01 || abs($comparisons[$criterionA->id][$criterionB->id] - 0.333333) < 0.01)) ? 'selected' : '' }}>1/3</option>
+                                        <option value="0.25" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && abs($comparisons[$criterionA->id][$criterionB->id] - 0.25) < 0.01) ? 'selected' : '' }}>1/4</option>
+                                        <option value="0.2" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && abs($comparisons[$criterionA->id][$criterionB->id] - 0.2) < 0.01) ? 'selected' : '' }}>1/5</option>
+                                        <option value="0.166667" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && (abs($comparisons[$criterionA->id][$criterionB->id] - 0.17) < 0.01 || abs($comparisons[$criterionA->id][$criterionB->id] - 0.166667) < 0.01)) ? 'selected' : '' }}>1/6</option>
+                                        <option value="0.142857" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && (abs($comparisons[$criterionA->id][$criterionB->id] - 0.14) < 0.01 || abs($comparisons[$criterionA->id][$criterionB->id] - 0.142857) < 0.01)) ? 'selected' : '' }}>1/7</option>
+                                        <option value="0.125" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && abs($comparisons[$criterionA->id][$criterionB->id] - 0.125) < 0.01) ? 'selected' : '' }}>1/8</option>
+                                        <option value="0.111111" {{ (isset($comparisons[$criterionA->id][$criterionB->id]) && (abs($comparisons[$criterionA->id][$criterionB->id] - 0.11) < 0.01 || abs($comparisons[$criterionA->id][$criterionB->id] - 0.111111) < 0.01)) ? 'selected' : '' }}>1/9</option>
                                     </select>
                                 @else
                                     <!-- Lower triangle: reciprocal values -->
+                                    @php
+                                        $reciprocalValue = null;
+                                        if (isset($comparisons[$criterionB->id][$criterionA->id]) && $comparisons[$criterionB->id][$criterionA->id] > 0) {
+                                            $originalValue = floatval($comparisons[$criterionB->id][$criterionA->id]);
+                                            
+                                            // Map common fractional values to their integer reciprocals
+                                            // This prevents floating point precision issues
+                                            $fractionMap = [
+                                                0.111111 => 9,      // 1/9
+                                                0.11 => 9,          // 1/9 (rounded)
+                                                0.125 => 8,         // 1/8
+                                                0.142857 => 7,      // 1/7
+                                                0.14 => 7,          // 1/7 (rounded)
+                                                0.166667 => 6,      // 1/6
+                                                0.17 => 6,          // 1/6 (rounded)
+                                                0.2 => 5,           // 1/5
+                                                0.25 => 4,          // 1/4
+                                                0.333333 => 3,      // 1/3 (exact)
+                                                0.333 => 3,         // 1/3 (rounded)
+                                                0.33 => 3,          // 1/3 (rounded)
+                                                0.5 => 2,           // 1/2
+                                            ];
+                                            
+                                            // Check if original value matches a known fraction
+                                            $found = false;
+                                            foreach ($fractionMap as $fraction => $reciprocal) {
+                                                if (abs($originalValue - $fraction) < 0.01) {
+                                                    $reciprocalValue = $reciprocal;
+                                                    $found = true;
+                                                    break;
+                                                }
+                                            }
+                                            
+                                            // If not found in map, calculate reciprocal normally
+                                            if (!$found) {
+                                                $reciprocalValue = 1 / $originalValue;
+                                                // Round to nearest integer if very close
+                                                $rounded = round($reciprocalValue);
+                                                if (abs($reciprocalValue - $rounded) < 0.001) {
+                                                    $reciprocalValue = $rounded;
+                                                }
+                                            }
+                                        }
+                                    @endphp
                                     <span class="text-gray-600 reciprocal-value" 
                                           id="reciprocal-{{ $criterionB->id }}-{{ $criterionA->id }}">
-                                        @if(isset($comparisons[$criterionB->id][$criterionA->id]))
-                                            {{ $comparisons[$criterionB->id][$criterionA->id] > 0 ? number_format(1/$comparisons[$criterionB->id][$criterionA->id], 3) : '-' }}
+                                        @if($reciprocalValue !== null)
+                                            @if($reciprocalValue == intval($reciprocalValue))
+                                                {{ intval($reciprocalValue) }}
+                                            @else
+                                                {{ number_format($reciprocalValue, 3, '.', '') }}
+                                            @endif
                                         @else
                                             -
                                         @endif
                                     </span>
                                     <input type="hidden" name="comparison[{{ $criterionA->id }}][{{ $criterionB->id }}]" 
                                            id="hidden-{{ $criterionA->id }}-{{ $criterionB->id }}"
-                                           value="{{ isset($comparisons[$criterionA->id][$criterionB->id]) ? $comparisons[$criterionA->id][$criterionB->id] : '' }}">
+                                           value="{{ $reciprocalValue !== null ? number_format($reciprocalValue, 6, '.', '') : '' }}">
                                 @endif
                             </td>
                             @endforeach
@@ -499,11 +547,53 @@ function updateMatrix(selectElement) {
         const hiddenElement = document.getElementById(`hidden-${col}-${row}`);
         
         if (reciprocalElement && hiddenElement) {
-            const reciprocalValue = 1 / value;
+            // Map common fractional values to their integer reciprocals
+            const fractionMap = {
+                0.111111: 9,  // 1/9 (exact)
+                0.11: 9,      // 1/9 (rounded)
+                0.125: 8,     // 1/8
+                0.142857: 7,  // 1/7 (exact)
+                0.14: 7,      // 1/7 (rounded)
+                0.166667: 6,  // 1/6 (exact)
+                0.17: 6,      // 1/6 (rounded)
+                0.2: 5,       // 1/5
+                0.25: 4,      // 1/4
+                0.333333: 3,  // 1/3 (exact)
+                0.333: 3,     // 1/3 (rounded)
+                0.33: 3,      // 1/3 (rounded)
+                0.5: 2        // 1/2
+            };
+            
+            let reciprocalValue;
+            // Check if value matches a known fraction
+            let found = false;
+            for (const [fraction, reciprocal] of Object.entries(fractionMap)) {
+                if (Math.abs(value - parseFloat(fraction)) < 0.01) {
+                    reciprocalValue = reciprocal;
+                    found = true;
+                    break;
+                }
+            }
+            
+            // If not found, calculate normally
+            if (!found) {
+                reciprocalValue = 1 / value;
+                // Round to nearest integer if very close
+                const rounded = Math.round(reciprocalValue);
+                if (Math.abs(reciprocalValue - rounded) < 0.001) {
+                    reciprocalValue = rounded;
+                }
+            }
             
             // Animate the reciprocal update
             reciprocalElement.parentElement.classList.add('bg-green-50', 'border-green-300');
-            reciprocalElement.textContent = reciprocalValue.toFixed(3);
+            
+            // Display: show integer if whole number, otherwise show 3 decimals
+            if (reciprocalValue === Math.floor(reciprocalValue)) {
+                reciprocalElement.textContent = reciprocalValue;
+            } else {
+                reciprocalElement.textContent = reciprocalValue.toFixed(3);
+            }
             hiddenElement.value = reciprocalValue.toFixed(6);
             
             setTimeout(() => {

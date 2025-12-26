@@ -21,19 +21,15 @@ Route::middleware(['auth', 'user'])->group(function () {
     
     // Villa routes for users
     Route::get('/villas', function () {
-        return view('results'); // Show villas list
+        return view('user.villas.index');
     })->name('user.villas.index');
     
     Route::get('/villa/{id}', function ($id) {
         return view('villa-detail', ['villaId' => $id]);
     })->name('villa.detail');
     
-    // Preferences routes
-    Route::get('/preferences', [PreferenceController::class, 'index'])->name('preferences');
-    Route::get('/preferences', [PreferenceController::class, 'index'])->name('user.preferences.index'); // Alias
-    Route::post('/preferences', [PreferenceController::class, 'store'])->name('preferences.store');
-    
-    // Comparison routes (AHP for users)
+  
+    // Comparison routes (AHP info for users)
     Route::get('/comparison', function () {
         return view('ahp-comparison');
     })->name('user.comparison.index');
@@ -43,8 +39,28 @@ Route::middleware(['auth', 'user'])->group(function () {
         return view('results');
     })->name('results');
     Route::get('/recommendations', function () {
-        return view('results'); // Same as results
+        return view('results');
     })->name('user.recommendations.index');
+    
+    // Compare villas
+    Route::get('/compare', function () {
+        return view('user.compare');
+    })->name('user.compare.index');
+    
+    // About system
+    Route::get('/about', function () {
+        return view('user.about');
+    })->name('user.about.index');
+    
+    // Favorites
+    Route::get('/favorites', function () {
+        return view('user.favorites');
+    })->name('user.favorites.index');
+    
+    // History
+    Route::get('/history', function () {
+        return view('user.history');
+    })->name('user.history.index');
 });
 
 // Admin Routes (requires admin role)
@@ -54,9 +70,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('users.delete');
     
     // Criteria Management
-    Route::resource('criteria', CriteriaController::class);
+    Route::resource('criteria', CriteriaController::class)->except(['destroy']);
     Route::post('/criteria/{criteria}/toggle', [CriteriaController::class, 'toggleStatus'])->name('criteria.toggle');
-    Route::delete('/criteria/{criteria}', [CriteriaController::class, 'destroy'])->name('criteria.delete');
+    Route::delete('/criteria/{id}', [CriteriaController::class, 'destroy'])->name('criteria.delete');
+    Route::post('/criteria/update-order', [CriteriaController::class, 'updateOrder'])->name('criteria.update-order');
     
     // Villa Management
     Route::resource('villas', VillaController::class);

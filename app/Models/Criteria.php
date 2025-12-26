@@ -14,7 +14,6 @@ class Criteria extends Model
     protected $fillable = [
         'name',
         'code',
-        'type',
         'description',
         'weight',
         'is_active',

@@ -29,10 +29,8 @@ Route::middleware(['auth', 'user'])->group(function () {
     })->name('villa.detail');
     
   
-    // Comparison routes (AHP info for users)
-    Route::get('/comparison', function () {
-        return view('ahp-comparison');
-    })->name('user.comparison.index');
+    // Comparison routes (AHP info for users) - REMOVED
+
     
     // Recommendations/Results routes
     Route::get('/results', function () {

@@ -15,21 +15,20 @@ Sistem Pendukung Keputusan Rekomendasi Villa di Kabupaten Sleman adalah aplikasi
 #### Dashboard User
 - **Dashboard** (`dashboard.blade.php`) - Ringkasan sistem dan aksi cepat
 - **Input Preferensi** (`preferences.blade.php`) - Form input kriteria dengan skala Likert (1-5)
-- **Perbandingan AHP** (`ahp-comparison.blade.php`) - Perbandingan berpasangan kriteria dengan skala Saaty
 - **Hasil Rekomendasi** (`results.blade.php`) - Ranking villa berdasarkan skor TOPSIS
 - **Detail Villa** (`villa-detail.blade.php`) - Informasi lengkap villa dan evaluasi kriteria
 
 #### Proses Rekomendasi
 1. **Langkah 1**: Input preferensi kriteria (Harga, Lokasi, Fasilitas, Kebersihan, Rating, Kapasitas)
-2. **Langkah 2**: Perbandingan berpasangan AHP untuk menentukan bobot kriteria
-3. **Langkah 3**: Perhitungan TOPSIS untuk ranking villa
-4. **Langkah 4**: Tampilan hasil rekomendasi dengan skor dan detail
+2. **Langkah 2**: Perhitungan TOPSIS untuk ranking villa
+3. **Langkah 3**: Tampilan hasil rekomendasi dengan skor dan detail
 
 ### 🔧 **Fitur Administrator**
 
 #### Dashboard Admin
 - **Admin Dashboard** (`admin-dashboard.blade.php`) - Statistik sistem dan manajemen
 - **Manajemen Villa** (`admin/villas.blade.php`) - CRUD villa dengan filter dan pencarian
+- **Analisis AHP** (`admin/ahp-comparison.blade.php`) - Perbandingan berpasangan dan hitung bobot
 
 #### Manajemen Data
 - **Villa Management** - Tambah, edit, hapus, dan kelola data villa
@@ -86,12 +85,12 @@ resources/views/
 ├── welcome.blade.php              # Landing page
 ├── dashboard.blade.php            # Dashboard user
 ├── preferences.blade.php          # Input preferensi kriteria
-├── ahp-comparison.blade.php       # Perbandingan AHP
 ├── results.blade.php              # Hasil rekomendasi TOPSIS
 ├── villa-detail.blade.php         # Detail villa
 ├── admin-dashboard.blade.php      # Dashboard admin
 ├── admin/
-│   └── villas.blade.php           # Manajemen villa
+│   ├── villas.blade.php           # Manajemen villa
+│   └── ahp-comparison.blade.php   # Analisis AHP
 └── layouts/
     └── navigation.blade.php       # Navigation menu
 ```
@@ -134,13 +133,13 @@ resources/views/
 2. **Register/Login** → Autentikasi pengguna
 3. **Dashboard** → Overview dan quick actions
 4. **Preferensi** → Input tingkat kepentingan kriteria
-5. **AHP** → Perbandingan berpasangan kriteria
-6. **Rekomendasi** → Hasil ranking villa dengan skor TOPSIS
-7. **Detail** → Informasi lengkap villa pilihan
+5. **Rekomendasi** → Hasil ranking villa dengan skor TOPSIS
+6. **Detail** → Informasi lengkap villa pilihan
 
 ### 🔧 **Admin Journey**
 1. **Admin Dashboard** → Statistik dan monitoring sistem
-2. **Villa Management** → CRUD data villa
+2. **AHP Analysis** → Hitung bobot kriteria
+3. **Villa Management** → CRUD data villa
 3. **User Management** → Kelola pengguna
 4. **Reports** → Analytics dan insights
 

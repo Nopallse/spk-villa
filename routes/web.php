@@ -7,6 +7,9 @@ use App\Http\Controllers\Admin\VillaController;
 use App\Http\Controllers\Admin\PairwiseController;
 use App\Http\Controllers\Admin\AHPController;
 use App\Http\Controllers\User\PreferenceController;
+use App\Http\Controllers\User\ResultController;
+use App\Http\Controllers\User\VillaSearchController;
+use App\Http\Controllers\User\CompareController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -20,30 +23,29 @@ Route::middleware(['auth', 'user'])->group(function () {
     })->name('dashboard');
     
     // Villa routes for users
-    Route::get('/villas', function () {
-        return view('user.villas.index');
-    })->name('user.villas.index');
+    Route::get('/villas', [VillaSearchController::class, 'index'])->name('user.villas.index');
+    Route::get('/villas/search', [VillaSearchController::class, 'search'])->name('user.villas.search');
+    Route::get('/villas/recommendations', [VillaSearchController::class, 'recommendations'])->name('user.villas.recommendations');
     
     Route::get('/villa/{id}', function ($id) {
         return view('villa-detail', ['villaId' => $id]);
     })->name('villa.detail');
     
   
-    // Comparison routes (AHP info for users) - REMOVED
-
+    // Comparison routes (AHP info for users)
+    Route::get('/comparison', function () {
+        return view('ahp-comparison');
+    })->name('user.comparison.index');
     
-    // Recommendations/Results routes
-    Route::get('/results', function () {
-        return view('results');
-    })->name('results');
-    Route::get('/recommendations', function () {
-        return view('results');
-    })->name('user.recommendations.index');
+    // Recommendations/Results routes with TOPSIS
+    Route::get('/results', [ResultController::class, 'index'])->name('results');
+    Route::get('/results/export/pdf', [ResultController::class, 'exportPdf'])->name('results.export.pdf');
+    Route::get('/results/{villaId}', [ResultController::class, 'detail'])->name('results.detail');
+    Route::get('/recommendations', [ResultController::class, 'index'])->name('user.recommendations.index');
     
     // Compare villas
-    Route::get('/compare', function () {
-        return view('user.compare');
-    })->name('user.compare.index');
+    Route::get('/compare', [CompareController::class, 'index'])->name('user.compare.index');
+    Route::post('/compare/data', [CompareController::class, 'getVillaData'])->name('user.compare.data');
     
     // About system
     Route::get('/about', function () {

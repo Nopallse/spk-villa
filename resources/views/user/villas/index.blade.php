@@ -6,7 +6,7 @@
                     Cari Villa
                 </h2>
                 <p class="mt-1 text-sm text-gray-600">
-                    Filter villa sesuai preferensi Anda untuk mendapatkan rekomendasi terbaik
+                    Filter villa sesuai preferensi Anda untuk mendapatkan rekomendasi terbaik dengan metode TOPSIS
                 </p>
             </div>
         </div>
@@ -22,7 +22,7 @@
                     Filter Preferensi
                 </h3>
                 
-                <form id="filterForm" class="space-y-6">
+                <form id="filterForm" method="GET" action="{{ route('user.villas.index') }}" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <!-- Rentang Harga -->
                         <div>
@@ -30,14 +30,19 @@
                                 <i class="fas fa-dollar-sign mr-1"></i>Rentang Harga
                             </label>
                             <div class="space-y-2">
-                                <input type="number" id="minPrice" placeholder="Min" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                                <input type="number" id="maxPrice" placeholder="Max" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                <input type="number" name="min_price" id="minPrice" placeholder="Min (Rp)" 
+                                    value="{{ $filters['min_price'] ?? '' }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                <input type="number" name="max_price" id="maxPrice" placeholder="Max (Rp)" 
+                                    value="{{ $filters['max_price'] ?? '' }}"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                             </div>
                             <div class="mt-2">
-                                <input type="range" id="priceRange" min="0" max="5000000" step="100000" value="2500000" class="w-full">
+                                <input type="range" id="priceRange" min="0" max="2000000" step="50000" 
+                                    value="{{ $filters['max_price'] ?? 1000000 }}" class="w-full">
                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
                                     <span>Rp 0</span>
-                                    <span>Rp 5.000.000</span>
+                                    <span id="priceDisplay">Rp {{ number_format($filters['max_price'] ?? 1000000, 0, ',', '.') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -47,14 +52,14 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-users mr-1"></i>Jumlah Tamu
                             </label>
-                            <select id="capacity" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <select name="capacity" id="capacity" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                                 <option value="">Semua</option>
-                                <option value="2">1-2 Orang</option>
-                                <option value="4">3-4 Orang</option>
-                                <option value="6">5-6 Orang</option>
-                                <option value="8">7-8 Orang</option>
-                                <option value="10">9-10 Orang</option>
-                                <option value="12">11+ Orang</option>
+                                <option value="2" {{ ($filters['capacity'] ?? '') == '2' ? 'selected' : '' }}>1-2 Orang</option>
+                                <option value="4" {{ ($filters['capacity'] ?? '') == '4' ? 'selected' : '' }}>3-4 Orang</option>
+                                <option value="6" {{ ($filters['capacity'] ?? '') == '6' ? 'selected' : '' }}>5-6 Orang</option>
+                                <option value="8" {{ ($filters['capacity'] ?? '') == '8' ? 'selected' : '' }}>7-8 Orang</option>
+                                <option value="10" {{ ($filters['capacity'] ?? '') == '10' ? 'selected' : '' }}>9-10 Orang</option>
+                                <option value="12" {{ ($filters['capacity'] ?? '') == '12' ? 'selected' : '' }}>11+ Orang</option>
                             </select>
                         </div>
 
@@ -63,13 +68,11 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-map-marker-alt mr-1"></i>Lokasi
                             </label>
-                            <select id="location" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <select name="location" id="location" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                                 <option value="">Semua Lokasi</option>
-                                <option value="Kaliurang">Kaliurang</option>
-                                <option value="Prambanan">Prambanan</option>
-                                <option value="Pakem">Pakem</option>
-                                <option value="Ngaglik">Ngaglik</option>
-                                <option value="Depok">Depok</option>
+                                @foreach($locations ?? [] as $loc)
+                                <option value="{{ $loc }}" {{ ($filters['location'] ?? '') == $loc ? 'selected' : '' }}>{{ $loc }}</option>
+                                @endforeach
                             </select>
                         </div>
 
@@ -79,37 +82,46 @@
                                 <i class="fas fa-swimming-pool mr-1"></i>Fasilitas
                             </label>
                             <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                                @php
+                                    $facilityOptions = [
+                                        'Swimming Pool' => 'Kolam Renang',
+                                        'WiFi' => 'WiFi',
+                                        'Parking' => 'Parkir',
+                                        'Air Conditioning' => 'AC',
+                                        'Kitchen' => 'Dapur',
+                                        'Garden' => 'Taman',
+                                        'BBQ' => 'BBQ Area',
+                                    ];
+                                    $selectedFacilities = $filters['facilities'] ?? [];
+                                @endphp
+                                @foreach($facilityOptions as $key => $label)
                                 <label class="flex items-center text-sm">
-                                    <input type="checkbox" name="facilities[]" value="pool" class="mr-2">
-                                    <span>Kolam Renang</span>
+                                    <input type="checkbox" name="facilities[]" value="{{ $key }}" 
+                                        {{ in_array($key, $selectedFacilities) ? 'checked' : '' }}
+                                        class="mr-2 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                    <span>{{ $label }}</span>
                                 </label>
-                                <label class="flex items-center text-sm">
-                                    <input type="checkbox" name="facilities[]" value="wifi" class="mr-2">
-                                    <span>WiFi</span>
-                                </label>
-                                <label class="flex items-center text-sm">
-                                    <input type="checkbox" name="facilities[]" value="parking" class="mr-2">
-                                    <span>Parkir</span>
-                                </label>
-                                <label class="flex items-center text-sm">
-                                    <input type="checkbox" name="facilities[]" value="ac" class="mr-2">
-                                    <span>AC</span>
-                                </label>
-                                <label class="flex items-center text-sm">
-                                    <input type="checkbox" name="facilities[]" value="kitchen" class="mr-2">
-                                    <span>Dapur</span>
-                                </label>
+                                @endforeach
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
-                        <button type="button" onclick="resetFilters()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                            <i class="fas fa-redo mr-2"></i>Reset
-                        </button>
-                        <button type="submit" class="px-8 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
-                            <i class="fas fa-search mr-2"></i>Proses Rekomendasi
-                        </button>
+                    <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                        <div class="text-sm text-gray-600">
+                            <span id="filterInfo">
+                                @if(!empty($filters['min_price']) || !empty($filters['max_price']) || !empty($filters['capacity']) || !empty($filters['location']) || !empty($filters['facilities']))
+                                    <i class="fas fa-info-circle mr-1"></i>Filter aktif diterapkan
+                                @endif
+                            </span>
+                        </div>
+                        <div class="flex space-x-4">
+                            <a href="{{ route('user.villas.index') }}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                                <i class="fas fa-redo mr-2"></i>Reset
+                            </a>
+                            <button type="submit" class="px-8 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                                <i class="fas fa-search mr-2"></i>Cari Villa
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -120,8 +132,8 @@
                     <i class="fas fa-info-circle text-blue-600 mr-3 mt-1"></i>
                     <div>
                         <p class="text-sm text-blue-800">
-                            <strong>Catatan:</strong> Filter ini digunakan untuk menyaring villa awal. 
-                            Sistem akan menggunakan metode TOPSIS dengan bobot kriteria yang sudah ditentukan untuk memberikan ranking akhir.
+                            <strong>Tips:</strong> Gunakan filter di atas untuk menyaring villa. Untuk mendapatkan ranking villa terbaik dengan metode TOPSIS, kunjungi halaman 
+                            <a href="{{ route('results') }}" class="underline font-medium">Hasil Rekomendasi</a>.
                         </p>
                     </div>
                 </div>
@@ -136,49 +148,74 @@
                     </h3>
                     <div class="flex items-center space-x-3">
                         <span class="text-sm text-gray-600" id="villaCount">
-                            Menampilkan {{ \App\Models\Villa::where('is_active', true)->count() }} villa
+                            Menampilkan {{ $villas->total() }} dari {{ $totalVillas ?? 0 }} villa
                         </span>
-                        <select class="border border-gray-300 rounded-lg px-3 py-1 text-sm">
-                            <option>Urutkan: Rekomendasi</option>
-                            <option>Harga: Terendah</option>
-                            <option>Harga: Tertinggi</option>
-                            <option>Rating: Tertinggi</option>
+                        <select name="sort" id="sortSelect" onchange="updateSort(this.value)" class="border border-gray-300 rounded-lg px-3 py-1 text-sm">
+                            <option value="recommended" {{ ($filters['sort'] ?? '') == 'recommended' ? 'selected' : '' }}>Urutkan: Rekomendasi</option>
+                            <option value="price_low" {{ ($filters['sort'] ?? '') == 'price_low' ? 'selected' : '' }}>Harga: Terendah</option>
+                            <option value="price_high" {{ ($filters['sort'] ?? '') == 'price_high' ? 'selected' : '' }}>Harga: Tertinggi</option>
+                            <option value="rating" {{ ($filters['sort'] ?? '') == 'rating' ? 'selected' : '' }}>Rating: Tertinggi</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="villaGrid">
-                    @php
-                        $villas = \App\Models\Villa::where('is_active', true)->paginate(9);
-                    @endphp
-                    
                     @forelse($villas as $villa)
-                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition">
+                    <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition villa-card" data-villa-id="{{ $villa->id }}">
                         <div class="h-48 bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center relative">
                             <i class="fas fa-home text-primary-400 text-5xl"></i>
-                            <button class="absolute top-2 right-2 bg-white p-2 rounded-full hover:bg-red-50 transition">
-                                <i class="fas fa-heart text-gray-400 hover:text-red-500"></i>
+                            <button onclick="toggleFavorite({{ $villa->id }})" class="absolute top-2 right-2 bg-white p-2 rounded-full hover:bg-red-50 transition">
+                                <i class="fas fa-heart text-gray-400 hover:text-red-500" id="heart-{{ $villa->id }}"></i>
                             </button>
+                            <div class="absolute bottom-2 left-2">
+                                <span class="bg-primary-600 text-white px-2 py-1 rounded text-xs">
+                                    <i class="fas fa-users mr-1"></i>{{ $villa->capacity }} orang
+                                </span>
+                            </div>
                         </div>
                         <div class="p-4">
                             <h4 class="font-bold text-gray-900 mb-1">{{ $villa->name }}</h4>
                             <p class="text-sm text-gray-600 mb-2">
                                 <i class="fas fa-map-marker-alt text-gray-400 mr-1"></i>
-                                {{ Str::limit($villa->address, 35) }}
+                                {{ $villa->location }}
                             </p>
                             <div class="flex items-center mb-3">
                                 <div class="flex text-yellow-400 mr-2">
-                                    @for($i = 0; $i < 5; $i++)
+                                    @for($i = 0; $i < floor($villa->rating); $i++)
                                     <i class="fas fa-star text-xs"></i>
                                     @endfor
+                                    @if($villa->rating - floor($villa->rating) >= 0.5)
+                                    <i class="fas fa-star-half-alt text-xs"></i>
+                                    @endif
                                 </div>
-                                <span class="text-xs text-gray-500">(4.5+)</span>
+                                <span class="text-xs text-gray-500">({{ number_format($villa->rating, 1) }})</span>
+                                <span class="text-xs text-gray-400 ml-2">• {{ $villa->total_reviews }} ulasan</span>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-lg font-bold text-primary-600">Rp {{ number_format($villa->price_per_night ?? 0, 0, ',', '.') }}</span>
-                                <a href="{{ route('villa.detail', $villa->id) }}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                                    Detail <i class="fas fa-arrow-right ml-1"></i>
-                                </a>
+                            <div class="flex flex-wrap gap-1 mb-3">
+                                @php
+                                    $facilities = json_decode($villa->facilities ?? '[]', true) ?? [];
+                                @endphp
+                                @foreach(array_slice($facilities, 0, 3) as $facility)
+                                <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">{{ $facility }}</span>
+                                @endforeach
+                                @if(count($facilities) > 3)
+                                <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">+{{ count($facilities) - 3 }}</span>
+                                @endif
+                            </div>
+                            <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                                <div>
+                                    <span class="text-lg font-bold text-primary-600">Rp {{ number_format($villa->price, 0, ',', '.') }}</span>
+                                    <span class="text-xs text-gray-500">/malam</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button onclick="addToCompare({{ $villa->id }}, '{{ addslashes($villa->name) }}', '{{ addslashes($villa->location ?? '') }}', {{ $villa->price }})" 
+                                        class="text-blue-600 hover:text-blue-700 text-sm" title="Bandingkan">
+                                        <i class="fas fa-balance-scale"></i>
+                                    </button>
+                                    <a href="{{ route('villa.detail', $villa->id) }}" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                                        Detail <i class="fas fa-arrow-right ml-1"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -186,7 +223,7 @@
                     <div class="col-span-3 text-center py-12 text-gray-400">
                         <i class="fas fa-home text-5xl mb-4"></i>
                         <p class="text-lg">Tidak ada villa ditemukan</p>
-                        <p class="text-sm mt-2">Coba ubah filter Anda</p>
+                        <p class="text-sm mt-2">Coba ubah filter Anda atau <a href="{{ route('user.villas.index') }}" class="text-primary-600 underline">reset filter</a></p>
                     </div>
                     @endforelse
                 </div>
@@ -200,31 +237,110 @@
         </div>
     </div>
 
+    <!-- Floating Compare Button -->
+    <div id="floatingCompare" class="fixed bottom-6 right-6 z-40" style="display: none;">
+        <a href="{{ route('user.compare.index') }}" class="flex items-center bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-blue-700 transition">
+            <i class="fas fa-balance-scale mr-2"></i>
+            <span>Bandingkan (<span id="compareCount">0</span>)</span>
+        </a>
+    </div>
+
     <script>
-        document.getElementById('filterForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Redirect to recommendations with filters
-            const filters = {
-                minPrice: document.getElementById('minPrice').value,
-                maxPrice: document.getElementById('maxPrice').value,
-                capacity: document.getElementById('capacity').value,
-                location: document.getElementById('location').value,
-                facilities: Array.from(document.querySelectorAll('input[name="facilities[]"]:checked')).map(cb => cb.value)
-            };
-            
-            // Store filters and redirect
-            sessionStorage.setItem('villaFilters', JSON.stringify(filters));
-            window.location.href = '{{ route("user.recommendations.index") }}';
-        });
-
-        function resetFilters() {
-            document.getElementById('filterForm').reset();
-            document.getElementById('priceRange').value = 2500000;
-        }
-
         // Price range slider
         document.getElementById('priceRange').addEventListener('input', function(e) {
-            document.getElementById('maxPrice').value = e.target.value;
+            const value = parseInt(e.target.value);
+            document.getElementById('maxPrice').value = value;
+            document.getElementById('priceDisplay').textContent = 'Rp ' + value.toLocaleString('id-ID');
+        });
+
+        // Sync max price input with slider
+        document.getElementById('maxPrice').addEventListener('change', function(e) {
+            const value = parseInt(e.target.value) || 0;
+            document.getElementById('priceRange').value = value;
+            document.getElementById('priceDisplay').textContent = 'Rp ' + value.toLocaleString('id-ID');
+        });
+
+        // Update sort
+        function updateSort(value) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('sort', value);
+            window.location.href = url.toString();
+        }
+
+        // Toggle favorite
+        function toggleFavorite(villaId) {
+            const heart = document.getElementById('heart-' + villaId);
+            let favorites = JSON.parse(localStorage.getItem('villaFavorites') || '[]');
+            
+            if (favorites.includes(villaId)) {
+                favorites = favorites.filter(id => id !== villaId);
+                heart.classList.remove('text-red-500');
+                heart.classList.add('text-gray-400');
+            } else {
+                favorites.push(villaId);
+                heart.classList.remove('text-gray-400');
+                heart.classList.add('text-red-500');
+            }
+            
+            localStorage.setItem('villaFavorites', JSON.stringify(favorites));
+        }
+
+        // Add to compare
+        function addToCompare(villaId, villaName, location, price) {
+            let compareList = JSON.parse(localStorage.getItem('villaCompareList') || '[]');
+            
+            // Check if already exists
+            if (compareList.some(v => v.id === villaId)) {
+                alert('Villa sudah ada di daftar perbandingan');
+                return;
+            }
+            
+            if (compareList.length >= 3) {
+                alert('Maksimal 3 villa yang dapat dibandingkan. Hapus salah satu villa terlebih dahulu.');
+                return;
+            }
+            
+            // Add villa with basic data (score will be fetched on compare page)
+            compareList.push({
+                id: villaId,
+                name: villaName,
+                location: location,
+                price: price,
+                score: 0,
+                rank: 0
+            });
+            
+            localStorage.setItem('villaCompareList', JSON.stringify(compareList));
+            updateFloatingButton();
+            alert('Villa berhasil ditambahkan ke perbandingan!');
+        }
+
+        function updateFloatingButton() {
+            const compareList = JSON.parse(localStorage.getItem('villaCompareList') || '[]');
+            const floatingBtn = document.getElementById('floatingCompare');
+            const countSpan = document.getElementById('compareCount');
+            
+            if (compareList.length > 0) {
+                floatingBtn.style.display = 'block';
+                countSpan.textContent = compareList.length;
+            } else {
+                floatingBtn.style.display = 'none';
+            }
+        }
+
+        // Load favorites on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const favorites = JSON.parse(localStorage.getItem('villaFavorites') || '[]');
+            favorites.forEach(villaId => {
+                const heart = document.getElementById('heart-' + villaId);
+                if (heart) {
+                    heart.classList.remove('text-gray-400');
+                    heart.classList.add('text-red-500');
+                }
+            });
+            
+            // Update floating button
+            updateFloatingButton();
         });
     </script>
 </x-app-layout>

@@ -25,24 +25,43 @@
                 <form id="filterForm" method="GET" action="{{ route('user.villas.index') }}" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <!-- Rentang Harga -->
-                        <div>
+                        <div class="lg:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-dollar-sign mr-1"></i>Rentang Harga
                             </label>
-                            <div class="space-y-2">
-                                <input type="number" name="min_price" id="minPrice" placeholder="Min (Rp)" 
-                                    value="{{ $filters['min_price'] ?? '' }}"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                                <input type="number" name="max_price" id="maxPrice" placeholder="Max (Rp)" 
-                                    value="{{ $filters['max_price'] ?? '' }}"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <div class="grid grid-cols-2 gap-3 mb-3">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Minimum</label>
+                                    <input type="number" name="min_price" id="minPrice" placeholder="Min (Rp)" 
+                                        value="{{ $filters['min_price'] ?? '' }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Maksimum</label>
+                                    <input type="number" name="max_price" id="maxPrice" placeholder="Max (Rp)" 
+                                        value="{{ $filters['max_price'] ?? '' }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
                             </div>
-                            <div class="mt-2">
-                                <input type="range" id="priceRange" min="0" max="2000000" step="50000" 
-                                    value="{{ $filters['max_price'] ?? 1000000 }}" class="w-full">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <!-- Dual Range Slider -->
+                            <div class="relative pt-1">
+                                <div class="flex justify-between text-xs text-gray-500 mb-2">
+                                    <span id="minPriceDisplay">Rp {{ number_format($filters['min_price'] ?? 0, 0, ',', '.') }}</span>
+                                    <span id="maxPriceDisplay">Rp {{ number_format($filters['max_price'] ?? 2000000, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="relative h-2">
+                                    <div class="absolute w-full h-2 bg-gray-200 rounded"></div>
+                                    <div id="priceRangeTrack" class="absolute h-2 bg-primary-500 rounded"></div>
+                                    <input type="range" id="minPriceRange" min="0" max="2000000" step="50000" 
+                                        value="{{ $filters['min_price'] ?? 0 }}" 
+                                        class="absolute w-full h-2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-primary-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-primary-600 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0">
+                                    <input type="range" id="maxPriceRange" min="0" max="2000000" step="50000" 
+                                        value="{{ $filters['max_price'] ?? 2000000 }}" 
+                                        class="absolute w-full h-2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-primary-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-primary-600 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0">
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-400 mt-2">
                                     <span>Rp 0</span>
-                                    <span id="priceDisplay">Rp {{ number_format($filters['max_price'] ?? 1000000, 0, ',', '.') }}</span>
+                                    <span>Rp 2.000.000</span>
                                 </div>
                             </div>
                         </div>
@@ -60,19 +79,6 @@
                                 <option value="8" {{ ($filters['capacity'] ?? '') == '8' ? 'selected' : '' }}>7-8 Orang</option>
                                 <option value="10" {{ ($filters['capacity'] ?? '') == '10' ? 'selected' : '' }}>9-10 Orang</option>
                                 <option value="12" {{ ($filters['capacity'] ?? '') == '12' ? 'selected' : '' }}>11+ Orang</option>
-                            </select>
-                        </div>
-
-                        <!-- Lokasi -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-map-marker-alt mr-1"></i>Lokasi
-                            </label>
-                            <select name="location" id="location" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                                <option value="">Semua Lokasi</option>
-                                @foreach($locations ?? [] as $loc)
-                                <option value="{{ $loc }}" {{ ($filters['location'] ?? '') == $loc ? 'selected' : '' }}>{{ $loc }}</option>
-                                @endforeach
                             </select>
                         </div>
 
@@ -109,7 +115,7 @@
                     <div class="flex justify-between items-center pt-4 border-t border-gray-200">
                         <div class="text-sm text-gray-600">
                             <span id="filterInfo">
-                                @if(!empty($filters['min_price']) || !empty($filters['max_price']) || !empty($filters['capacity']) || !empty($filters['location']) || !empty($filters['facilities']))
+                                @if(!empty($filters['min_price']) || !empty($filters['max_price']) || !empty($filters['capacity']) || !empty($filters['facilities']))
                                     <i class="fas fa-info-circle mr-1"></i>Filter aktif diterapkan
                                 @endif
                             </span>
@@ -246,18 +252,93 @@
     </div>
 
     <script>
-        // Price range slider
-        document.getElementById('priceRange').addEventListener('input', function(e) {
-            const value = parseInt(e.target.value);
-            document.getElementById('maxPrice').value = value;
-            document.getElementById('priceDisplay').textContent = 'Rp ' + value.toLocaleString('id-ID');
+        // Dual Range Slider for Price
+        const minPriceRange = document.getElementById('minPriceRange');
+        const maxPriceRange = document.getElementById('maxPriceRange');
+        const minPriceInput = document.getElementById('minPrice');
+        const maxPriceInput = document.getElementById('maxPrice');
+        const minPriceDisplay = document.getElementById('minPriceDisplay');
+        const maxPriceDisplay = document.getElementById('maxPriceDisplay');
+        const priceRangeTrack = document.getElementById('priceRangeTrack');
+
+        function formatPrice(value) {
+            return 'Rp ' + parseInt(value).toLocaleString('id-ID');
+        }
+
+        function updatePriceRangeTrack() {
+            const minVal = parseInt(minPriceRange.value);
+            const maxVal = parseInt(maxPriceRange.value);
+            const minPercent = (minVal / 2000000) * 100;
+            const maxPercent = (maxVal / 2000000) * 100;
+            priceRangeTrack.style.left = minPercent + '%';
+            priceRangeTrack.style.width = (maxPercent - minPercent) + '%';
+        }
+
+        // Min price range slider
+        minPriceRange.addEventListener('input', function(e) {
+            let minVal = parseInt(e.target.value);
+            let maxVal = parseInt(maxPriceRange.value);
+            
+            // Prevent min from exceeding max
+            if (minVal > maxVal) {
+                minVal = maxVal;
+                e.target.value = minVal;
+            }
+            
+            minPriceInput.value = minVal;
+            minPriceDisplay.textContent = formatPrice(minVal);
+            updatePriceRangeTrack();
+        });
+
+        // Max price range slider
+        maxPriceRange.addEventListener('input', function(e) {
+            let maxVal = parseInt(e.target.value);
+            let minVal = parseInt(minPriceRange.value);
+            
+            // Prevent max from going below min
+            if (maxVal < minVal) {
+                maxVal = minVal;
+                e.target.value = maxVal;
+            }
+            
+            maxPriceInput.value = maxVal;
+            maxPriceDisplay.textContent = formatPrice(maxVal);
+            updatePriceRangeTrack();
+        });
+
+        // Sync min price input with slider
+        minPriceInput.addEventListener('change', function(e) {
+            let value = parseInt(e.target.value) || 0;
+            let maxVal = parseInt(maxPriceRange.value);
+            
+            if (value > maxVal) value = maxVal;
+            if (value < 0) value = 0;
+            if (value > 2000000) value = 2000000;
+            
+            minPriceRange.value = value;
+            e.target.value = value;
+            minPriceDisplay.textContent = formatPrice(value);
+            updatePriceRangeTrack();
         });
 
         // Sync max price input with slider
-        document.getElementById('maxPrice').addEventListener('change', function(e) {
-            const value = parseInt(e.target.value) || 0;
-            document.getElementById('priceRange').value = value;
-            document.getElementById('priceDisplay').textContent = 'Rp ' + value.toLocaleString('id-ID');
+        maxPriceInput.addEventListener('change', function(e) {
+            let value = parseInt(e.target.value) || 2000000;
+            let minVal = parseInt(minPriceRange.value);
+            
+            if (value < minVal) value = minVal;
+            if (value < 0) value = 0;
+            if (value > 2000000) value = 2000000;
+            
+            maxPriceRange.value = value;
+            e.target.value = value;
+            maxPriceDisplay.textContent = formatPrice(value);
+            updatePriceRangeTrack();
+        });
+
+        // Initialize range track on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePriceRangeTrack();
         });
 
         // Update sort

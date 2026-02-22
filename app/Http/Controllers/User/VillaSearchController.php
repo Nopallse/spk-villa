@@ -26,21 +26,13 @@ class VillaSearchController extends Controller
         // Apply filters
         $filters = $this->applyFilters($query, $request);
 
-        // Get locations for dropdown
-        $locations = Villa::where('is_active', true)
-            ->distinct()
-            ->pluck('location')
-            ->filter()
-            ->sort()
-            ->values();
-
         // Get villas with pagination
         $villas = $query->paginate(9)->withQueryString();
 
         // Count total active villas
         $totalVillas = Villa::where('is_active', true)->count();
 
-        return view('user.villas.index', compact('villas', 'locations', 'filters', 'totalVillas'));
+        return view('user.villas.index', compact('villas', 'filters', 'totalVillas'));
     }
 
     /**
@@ -134,7 +126,6 @@ class VillaSearchController extends Controller
             'min_price' => $request->input('min_price'),
             'max_price' => $request->input('max_price'),
             'capacity' => $request->input('capacity'),
-            'location' => $request->input('location'),
             'facilities' => $request->input('facilities', []),
             'sort' => $request->input('sort', 'recommended'),
         ];
@@ -151,11 +142,6 @@ class VillaSearchController extends Controller
         // Capacity filter
         if (!empty($filters['capacity'])) {
             $query->where('capacity', '>=', $filters['capacity']);
-        }
-
-        // Location filter
-        if (!empty($filters['location'])) {
-            $query->where('location', 'like', '%' . $filters['location'] . '%');
         }
 
         // Facilities filter (JSON search)
